@@ -1,50 +1,42 @@
-import React from 'react'
-import cornerstone from '../../public/cornerstone/cornerstone2.js';
-import DcmLoader from '../../public/cornerstone/DcmLoader.js';
+import React from 'react';
+import Form from './Form';
+import BrowseFiles from './BrowseFiles';
 
-export default class App extends React.Component {
-
-	constructor(props){
-		super(props);
-	}
-
-
-handleDocumentUploadChange(event ){
-	
-	var fileInput = document.querySelector("#input-file");
-    var element = document.getElementById('dicomImage');
-
-	 	
-	 if (fileInput.files) {
-   		var file = fileInput.files[0];
-		 var imageId =	DcmLoader.wadouri.fileManager.add(file);
-	 	 cornerstone.loadImage(imageId).then(function(image) {
-	  	 var viewport = cornerstone.getDefaultViewport(element.children[0], image);
-
-           cornerstone.displayImage(element, image , viewport);
-           
-       });
-         
-
+class App extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      hasNameProvided: false,
+      userName: '',
+      fileName: ''
+    };
   }
 
-}
+  addName = name => {
+    this.setState({
+      hasNameProvided: true,
+      userName: name
+    });
+  };
 
+  getFileName = file => {
+    this.setState({ fileName: file });
+  };
 
-	componentDidMount() {
-			var element = document.getElementById('dicomImage');
-	        cornerstone.enable(element);
-
-	}
-
-
-  render () {
+  render = () => {
     return (
       <div>
-        <div id="dicomImage" style={{width:'512px',height:'512px'}}/>
-        <input id='input-file' multi type='file' onChange={this.handleDocumentUploadChange.bind(null ,this)} />
+        {!this.state.hasNameProvided ? (
+          <Form onUserName={this.addName} />
+        ) : (
+          <div>
+            <p className="user-greeting">{`Welcome ${this.state.name}!`} </p>
+            <BrowseFiles getFileName={this.getFileName} />
+          </div>
+        )}
       </div>
-
-    )
-  }
+    );
+  };
 }
+
+export default App;

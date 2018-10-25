@@ -1,18 +1,13 @@
 {
-  "name": "react-cornerstone",
+  "name": "cornerstone-project",
   "version": "1.0.0",
-  "description": "React Dicom image viewer",
+  "description": "",
   "main": "./src/entry.js",
-  "homepage": "https://github.com/Revln9/react-cornerstone",
-  "author": "Sami Chetbi",
+  "author": "",
   "license": "MIT",
   "scripts": {
     "build": "cross-env NODE_ENV=production webpack --config ./webpack.prod.config.js --progress --colors",
     "start": "node app.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Revln9/react-cornerstone.git"
   },
   "keywords": [
     "react",
@@ -25,7 +20,7 @@
     "express": "^4.13.4",
     "react": "^0.14.8",
     "react-dom": "^0.14.8",
-    "dicom-parser":"1.7.4"
+    "dicom-parser": "1.7.4"
   },
   "devDependencies": {
     "babel": "^6.5.2",

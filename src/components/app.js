@@ -30,8 +30,13 @@ class App extends React.Component {
           <Form onUserName={this.addName} />
         ) : (
           <div>
-            <p className="user-greeting">{`Welcome ${this.state.name}!`} </p>
-            <BrowseFiles getFileName={this.getFileName} />
+            <p className="user-greeting">
+              {`Welcome ${this.state.userName}!`}{' '}
+            </p>
+            <BrowseFiles
+              //   getFileName={this.getFileName}
+              userName={this.state.userName}
+            />
           </div>
         )}
       </div>

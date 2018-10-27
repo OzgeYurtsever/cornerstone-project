@@ -1,22 +1,22 @@
 import React from 'react';
 
-const NameForm = props => {
+const AnnotationPopUp = props => {
   let input;
   return (
     <form
-      className="name-entry"
+      className="annotation"
       onSubmit={e => {
         e.preventDefault();
         if (!input.value.trim()) {
           return;
         }
         console.log(input.value);
-        props.onUserName(input.value);
+        props.onAnnotation(input.value);
       }}
     >
       <div>
         <label htmlFor="name-field">
-          User Name:
+          Annotation:
           <input ref={node => (input = node)} className="name-field" />
         </label>
         <button type="submit" className="save-button">
@@ -27,4 +27,4 @@ const NameForm = props => {
   );
 };
 
-export default NameForm;
+export default AnnotationPopUp;

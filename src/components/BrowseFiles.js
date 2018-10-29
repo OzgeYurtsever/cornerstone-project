@@ -63,8 +63,8 @@ class BrowseFile extends React.Component {
     this.state = {
       clickCounter: 0,
       fileName: '',
-      coordinateStart: null,
-      coordinateEnd: null,
+      coordinateStart: { x: 0, y: 0 },
+      coordinateEnd: { x: 0, y: 0 },
       areCoordinatesReady: false,
       annotation: ''
     };
@@ -74,12 +74,12 @@ class BrowseFile extends React.Component {
     const element = this.dicomImg;
     if (fileInput.files) {
       var file = fileInput.files[0];
+      console.log(file);
       var imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
       const filePath = document.getElementById('input-file').value + '';
       let fileName = filePath.replace(/.*[\/\\]/, '');
       this.setState({ fileName });
       cornerstone.loadImage(imageId).then(function(image) {
-        console.log('imageId', imageId);
         var viewport = cornerstone.getDefaultViewport(
           element.children[0],
           image
@@ -87,29 +87,59 @@ class BrowseFile extends React.Component {
 
         cornerstone.displayImage(element, image, viewport);
       });
-      // this.props.getFileName(fileName);
     }
   };
 
   handleClick = e => {
+    var element = this.dicomImg;
+    console.log('===========');
+    console.log(element);
+    // cornerstone.enable(element);
+    console.log(e);
+    let pixelCoordsStart;
+    let pixelCoordsEnd;
+    const ctx = element.children[0].getContext('2d');
+
     if (this.state.fileName.length > 0) {
       if (this.state.clickCounter === 0) {
-        //start kordinatini al state'e kaydet
-        const start = this.getMousePos(this.dicomImg, e);
+        const start = this.getMousePos(element, e);
         console.log(start);
+        pixelCoordsStart = cornerstone.pageToPixel(element, start.x, start.y);
+        console.log('----------------');
+        console.log(pixelCoordsStart);
+        console.log('----------------');
+
         this.setState({
           clickCounter: this.state.clickCounter + 1,
           coordinateStart: start
         });
       } else if (this.state.clickCounter === 1) {
         const end = this.getMousePos(this.dicomImg, e);
-        //end kordinatını al state'e kaydet
+        pixelCoordsEnd = cornerstone.pageToPixel(element, end.x, end.y);
+
         this.setState({
           coordinateEnd: end,
           areCoordinatesReady: true
         });
-        //draw fonksiyonunu çağır
+        console.log(cornerstoneTools);
+        //TODO: draw a line using cornerstonetools
+        // cornerstoneTools.drawLine(
+        //   ctx,
+        //   element,
+        //   pixelCoordsStart,
+        //   pixelCoordsEnd
+        // );
       }
+      let canvas = this.dicomImg.children[0];
+      // cornerstone.enable(canvas);
+      // console.log(
+      //   'method here',
+      //   cornerstone.pageToPixel(
+      //     canvas,
+      //     this.state.coordinateStart.x,
+      //     this.state.coordinateStart.y
+      //   )
+      // );
     }
   };
 
@@ -130,20 +160,26 @@ class BrowseFile extends React.Component {
     cornerstoneTools.external.Hammer = Hammer;
     var element = this.dicomImg;
     cornerstone.enable(element);
-    cornerstoneTools.mouseInput.enable(element);
-    console.log('element', element.children[0]);
+    // cornerstoneTools.mouseInput.enable(element);
+    // console.log('element', element.children[0]);
   }
 
+  getAnnotationName = e => {
+    e.preventDefault();
+    this.setState({ annotation: e.target.value });
+  };
+
   closeModal = () => {
-    //counter'i sifira set et
     //isim kaydet butonuna basıldığında http post requesti çağır
     //post username, filename, x, y, annotation name
     this.setState({
       areCoordinatesReady: false,
-      clickCounter: 0,
-      annotation: this.annotation.value
+      clickCounter: 0
+      // annotation: this.annotation.value
     });
   };
+
+  postAnnotationDetails = () => {};
 
   render() {
     console.log('state after annotation', this.state);
@@ -174,7 +210,10 @@ class BrowseFile extends React.Component {
               <div>
                 <label>
                   Annotation:
-                  <input ref={node => (this.annotation = node)} />
+                  <input
+                    ref={node => (this.annotation = node)}
+                    onChange={this.getAnnotationName}
+                  />
                 </label>
                 <button
                   type="button"

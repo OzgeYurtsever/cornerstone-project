@@ -1,12 +1,13 @@
 import React from 'react';
 import Modal from 'react-modal';
+import axios from 'axios';
 import * as cornerstone from 'cornerstone-core';
 import * as cornerstoneMath from 'cornerstone-math';
 import * as cornerstoneTools from 'cornerstone-tools';
 import Hammer from 'hammerjs';
 import * as cornerstoneWADOImageLoader from 'cornerstone-wado-image-loader';
 import * as dicomParser from 'dicom-parser';
-import AnnotationPopUp from './AnnotationPopUp';
+import AnnotationList from './AnnotationList';
 
 Modal.setAppElement('div');
 
@@ -66,9 +67,25 @@ class BrowseFile extends React.Component {
       coordinateStart: { x: 0, y: 0 },
       coordinateEnd: { x: 0, y: 0 },
       areCoordinatesReady: false,
-      annotation: ''
+      annotation: '',
+      annotationList: {
+        filename: 'file',
+        annotations: [
+          {
+            name: 'name',
+            user: 'user',
+            coordinates: [{ x: 10, y: 20 }, { x: 30, y: 40 }]
+          },
+          {
+            name: 'name2',
+            user: 'user2',
+            coordinates: [{ x: 15, y: 25 }, { x: 35, y: 45 }]
+          }
+        ]
+      }
     };
   }
+
   handleDocumentUploadChange = event => {
     const fileInput = document.querySelector('#input-file');
     const element = this.dicomImg;
@@ -92,55 +109,56 @@ class BrowseFile extends React.Component {
 
   handleClick = e => {
     var element = this.dicomImg;
-    console.log('===========');
-    console.log(element);
-    // cornerstone.enable(element);
-    console.log(e);
-    let pixelCoordsStart;
-    let pixelCoordsEnd;
-    const ctx = element.children[0].getContext('2d');
-
     if (this.state.fileName.length > 0) {
       if (this.state.clickCounter === 0) {
         const start = this.getMousePos(element, e);
-        console.log(start);
-        pixelCoordsStart = cornerstone.pageToPixel(element, start.x, start.y);
-        console.log('----------------');
-        console.log(pixelCoordsStart);
-        console.log('----------------');
-
         this.setState({
           clickCounter: this.state.clickCounter + 1,
           coordinateStart: start
         });
       } else if (this.state.clickCounter === 1) {
         const end = this.getMousePos(this.dicomImg, e);
-        pixelCoordsEnd = cornerstone.pageToPixel(element, end.x, end.y);
-
         this.setState({
           coordinateEnd: end,
           areCoordinatesReady: true
         });
-        console.log(cornerstoneTools);
-        //TODO: draw a line using cornerstonetools
-        // cornerstoneTools.drawLine(
-        //   ctx,
-        //   element,
-        //   pixelCoordsStart,
-        //   pixelCoordsEnd
-        // );
+        const canvas = this.dicomImg.children[0];
+        if (canvas.getContext) {
+          const ctx = element.children[0].getContext('2d');
+          ctx.beginPath();
+          ctx.moveTo(
+            this.state.coordinateStart.x,
+            this.state.coordinateStart.y
+          );
+          ctx.lineTo(end.x, end.y);
+          ctx.strokeStyle = '#ff0000';
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+        }
       }
-      let canvas = this.dicomImg.children[0];
-      // cornerstone.enable(canvas);
-      // console.log(
-      //   'method here',
-      //   cornerstone.pageToPixel(
-      //     canvas,
-      //     this.state.coordinateStart.x,
-      //     this.state.coordinateStart.y
-      //   )
-      // );
     }
+  };
+
+  postData = () => {
+    const data = {
+      startX: this.state.coordinateStart.x,
+      startY: this.state.coordinateStart.y,
+      endX: this.state.coordinateEnd.x,
+      endY: this.state.coordinateEnd.y
+    };
+
+    const username = this.state.userName;
+    const filename = this.state.fileName;
+    const aimname = this.state.annotation;
+
+    console.log('data', data);
+    axios
+      .post(
+        `http://localhost:8080/lib/images/${filename}/users/${username}/annotations/${aimname}`,
+        data
+      )
+      .then(res => console.log(res))
+      .catch(err => console.log(err));
   };
 
   getMousePos = (canvas, evt) => {
@@ -160,8 +178,6 @@ class BrowseFile extends React.Component {
     cornerstoneTools.external.Hammer = Hammer;
     var element = this.dicomImg;
     cornerstone.enable(element);
-    // cornerstoneTools.mouseInput.enable(element);
-    // console.log('element', element.children[0]);
   }
 
   getAnnotationName = e => {
@@ -170,16 +186,12 @@ class BrowseFile extends React.Component {
   };
 
   closeModal = () => {
-    //isim kaydet butonuna basıldığında http post requesti çağır
-    //post username, filename, x, y, annotation name
     this.setState({
       areCoordinatesReady: false,
       clickCounter: 0
-      // annotation: this.annotation.value
     });
+    this.postData();
   };
-
-  postAnnotationDetails = () => {};
 
   render() {
     console.log('state after annotation', this.state);
@@ -226,6 +238,7 @@ class BrowseFile extends React.Component {
             </form>
           </Modal>
         ) : null}
+        <AnnotationList data={this.state.annotationList} />
       </div>
     );
   }

@@ -1,0 +1,6 @@
+body {background-color: #F0EAE6;}
+
+#display {
+    display: flex; /* or inline-flex */
+    align-items: flex-start;
+  }

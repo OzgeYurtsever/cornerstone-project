@@ -139,23 +139,35 @@ class BrowseFile extends React.Component {
     }
   };
 
+  drawLine = (startx, starty, endx, endy) => {
+    const canvas = this.dicomImg.children[0];
+    if (canvas.getContext) {
+      const ctx = element.children[0].getContext('2d');
+      ctx.beginPath();
+      ctx.moveTo(this.state.coordinateStart.x, this.state.coordinateStart.y);
+      ctx.lineTo(end.x, end.y);
+      ctx.strokeStyle = '#ff0000';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+    }
+  };
+
   postData = () => {
-    const data = {
+    const postData = {
       startX: this.state.coordinateStart.x,
       startY: this.state.coordinateStart.y,
       endX: this.state.coordinateEnd.x,
       endY: this.state.coordinateEnd.y
     };
 
-    const username = this.state.userName;
+    const username = this.props.userName;
     const filename = this.state.fileName;
     const aimname = this.state.annotation;
 
-    console.log('data', data);
     axios
       .post(
-        `http://localhost:8080/lib/images/${filename}/users/${username}/annotations/${aimname}`,
-        data
+        `http://localhost:8080/restApo/webapi/lib/images/${filename}/users/${username}/annotations/${aimname}`,
+        postData
       )
       .then(res => console.log(res))
       .catch(err => console.log(err));
@@ -206,39 +218,41 @@ class BrowseFile extends React.Component {
           onChange={this.handleDocumentUploadChange}
         />
 
-        <div
-          id="dicomImage"
-          style={{ width: '512px', height: '512px' }}
-          ref={node => (this.dicomImg = node)}
-          onClick={this.handleClick}
-        />
-        {this.state.areCoordinatesReady ? (
-          <Modal
-            isOpen={this.state.areCoordinatesReady}
-            onRequestClose={this.closeModal}
-            style={customStyles}
-          >
-            <form>
-              <div>
-                <label>
-                  Annotation:
-                  <input
-                    ref={node => (this.annotation = node)}
-                    onChange={this.getAnnotationName}
-                  />
-                </label>
-                <button
-                  type="button"
-                  className="annotation-save"
-                  onClick={this.closeModal}
-                >
-                  Save
-                </button>
-              </div>
-            </form>
-          </Modal>
-        ) : null}
-        <AnnotationList data={this.state.annotationList} />
+        <div id="display">
+          <div
+            id="dicomImage"
+            style={{ width: '512px', height: '512px' }}
+            ref={node => (this.dicomImg = node)}
+            onClick={this.handleClick}
+          />
+          {this.state.areCoordinatesReady ? (
+            <Modal
+              isOpen={this.state.areCoordinatesReady}
+              onRequestClose={this.closeModal}
+              style={customStyles}
+            >
+              <form>
+                <div>
+                  <label>
+                    Annotation:
+                    <input
+                      ref={node => (this.annotation = node)}
+                      onChange={this.getAnnotationName}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    className="annotation-save"
+                    onClick={this.closeModal}
+                  >
+                    Save
+                  </button>
+                </div>
+              </form>
+            </Modal>
+          ) : null}
+          <AnnotationList data={this.state.annotationList} />
+        </div>
       </div>
     );
   }

@@ -9,6 +9,21 @@ import * as cornerstoneWADOImageLoader from 'cornerstone-wado-image-loader';
 import * as dicomParser from 'dicom-parser';
 import AnnotationList from './AnnotationList';
 
+// {
+//   filename: 'file',
+//   annotations: [
+//     {
+//       name: 'name',
+//       user: 'user',
+//       coordinates: [{ x: 10, y: 20 }, { x: 30, y: 40 }]
+//     },
+//     {
+//       name: 'name2',
+//       user: 'user2',
+//       coordinates: [{ x: 15, y: 25 }, { x: 35, y: 45 }]
+//     }
+//   ]
+// }
 Modal.setAppElement('div');
 
 const customStyles = {
@@ -68,33 +83,20 @@ class BrowseFile extends React.Component {
       coordinateEnd: { x: 0, y: 0 },
       areCoordinatesReady: false,
       annotation: '',
-      annotationList: {
-        filename: 'file',
-        annotations: [
-          {
-            name: 'name',
-            user: 'user',
-            coordinates: [{ x: 10, y: 20 }, { x: 30, y: 40 }]
-          },
-          {
-            name: 'name2',
-            user: 'user2',
-            coordinates: [{ x: 15, y: 25 }, { x: 35, y: 45 }]
-          }
-        ]
-      }
+      annotationList: []
     };
   }
 
   handleDocumentUploadChange = event => {
     const fileInput = document.querySelector('#input-file');
     const element = this.dicomImg;
+    let fileName;
     if (fileInput.files) {
       var file = fileInput.files[0];
       console.log(file);
       var imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
       const filePath = document.getElementById('input-file').value + '';
-      let fileName = filePath.replace(/.*[\/\\]/, '');
+      fileName = filePath.replace(/.*[\/\\]/, '');
       this.setState({ fileName });
       cornerstone.loadImage(imageId).then(function(image) {
         var viewport = cornerstone.getDefaultViewport(
@@ -105,6 +107,7 @@ class BrowseFile extends React.Component {
         cornerstone.displayImage(element, image, viewport);
       });
     }
+    this.getAnnotationList(this.props.userName, fileName);
   };
 
   handleClick = e => {
@@ -173,6 +176,21 @@ class BrowseFile extends React.Component {
       .catch(err => console.log(err));
   };
 
+  getAnnotationList = (username, filename) => {
+    const self = this;
+    axios
+      .get(
+        `http://localhost:8080/restApo/webapi/lib/images/${filename}/users/${username}`
+      )
+      .then(function(response) {
+        console.log('response', response);
+        console.log('response.data', response.data.annotationList);
+        self.setState({ annotationList: response.data.annotationList });
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
+  };
   getMousePos = (canvas, evt) => {
     var rect = canvas.getBoundingClientRect();
     return {
@@ -251,7 +269,9 @@ class BrowseFile extends React.Component {
               </form>
             </Modal>
           ) : null}
-          <AnnotationList data={this.state.annotationList} />
+          {this.state.annotationList.length > 0 ? (
+            <AnnotationList data={this.state.annotationList} />
+          ) : null}
         </div>
       </div>
     );

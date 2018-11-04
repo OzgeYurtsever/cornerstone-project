@@ -1,9 +1,9 @@
 import React from 'react';
 
 const AnnotationList = props => {
-  const anatotionList = props.data.annotations.map((annotation, index) => (
+  const anatotionList = props.data.map((annotation, index) => (
     <li>
-      Annotation {index + 1}: {annotation.name}
+      Annotation {index + 1}: {annotation.annotationName}
     </li>
   ));
   return <ul>{anatotionList}</ul>;

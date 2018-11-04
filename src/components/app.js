@@ -3,14 +3,11 @@ import Form from './Form';
 import BrowseFiles from './BrowseFiles';
 
 class App extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      hasNameProvided: false,
-      userName: '',
-      fileName: ''
-    };
-  }
+  state = {
+    hasNameProvided: false,
+    userName: '',
+    fileName: ''
+  };
 
   addName = name => {
     this.setState({
@@ -33,10 +30,7 @@ class App extends React.Component {
             <p className="user-greeting">
               {`Welcome ${this.state.userName}!`}{' '}
             </p>
-            <BrowseFiles
-              //   getFileName={this.getFileName}
-              userName={this.state.userName}
-            />
+            <BrowseFiles userName={this.state.userName} />
           </div>
         )}
       </div>

@@ -9,21 +9,6 @@ import * as cornerstoneWADOImageLoader from 'cornerstone-wado-image-loader';
 import * as dicomParser from 'dicom-parser';
 import AnnotationList from './AnnotationList';
 
-// {
-//   filename: 'file',
-//   annotations: [
-//     {
-//       name: 'name',
-//       user: 'user',
-//       coordinates: [{ x: 10, y: 20 }, { x: 30, y: 40 }]
-//     },
-//     {
-//       name: 'name2',
-//       user: 'user2',
-//       coordinates: [{ x: 15, y: 25 }, { x: 35, y: 45 }]
-//     }
-//   ]
-// }
 Modal.setAppElement('div');
 
 const customStyles = {
@@ -46,14 +31,14 @@ function getBlobUrl(url) {
   return baseUrl.createObjectURL(blob);
 }
 
-let webWorkerUrl = getBlobUrl(
+const webWorkerUrl = getBlobUrl(
   'https://unpkg.com/cornerstone-wado-image-loader/dist/cornerstoneWADOImageLoaderWebWorker.min.js'
 );
-let codecsUrl = getBlobUrl(
+const codecsUrl = getBlobUrl(
   'https://unpkg.com/cornerstone-wado-image-loader/dist/cornerstoneWADOImageLoaderCodecs.js'
 );
 
-var config = {
+const config = {
   startWebWorkersOnDemand: true,
   webWorkerPath: webWorkerUrl,
   taskConfiguration: {
@@ -87,67 +72,76 @@ class BrowseFile extends React.Component {
     };
   }
 
+  componentDidUpdate(prevProps, prevState) {
+    const { annotationList } = this.state;
+    if (annotationList.length !== prevState.annotationList.length) {
+      this.displayLines(annotationList);
+    }
+  }
+
   handleDocumentUploadChange = event => {
     const fileInput = document.querySelector('#input-file');
     const element = this.dicomImg;
     let fileName;
     if (fileInput.files) {
-      var file = fileInput.files[0];
-      console.log(file);
-      var imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+      const file = fileInput.files[0];
+      const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
       const filePath = document.getElementById('input-file').value + '';
       fileName = filePath.replace(/.*[\/\\]/, '');
+
+      this.getAnnotationList(this.props.userName, fileName);
+
       this.setState({ fileName });
+
       cornerstone.loadImage(imageId).then(function(image) {
-        var viewport = cornerstone.getDefaultViewport(
+        const viewport = cornerstone.getDefaultViewport(
           element.children[0],
           image
         );
-
         cornerstone.displayImage(element, image, viewport);
       });
     }
-    this.getAnnotationList(this.props.userName, fileName);
   };
 
   handleClick = e => {
-    var element = this.dicomImg;
+    const element = this.dicomImg;
+    let start;
+    let end;
     if (this.state.fileName.length > 0) {
       if (this.state.clickCounter === 0) {
-        const start = this.getMousePos(element, e);
+        start = this.getMousePos(element, e);
         this.setState({
           clickCounter: this.state.clickCounter + 1,
           coordinateStart: start
         });
       } else if (this.state.clickCounter === 1) {
-        const end = this.getMousePos(this.dicomImg, e);
+        end = this.getMousePos(this.dicomImg, e);
         this.setState({
           coordinateEnd: end,
           areCoordinatesReady: true
         });
-        const canvas = this.dicomImg.children[0];
-        if (canvas.getContext) {
-          const ctx = element.children[0].getContext('2d');
-          ctx.beginPath();
-          ctx.moveTo(
-            this.state.coordinateStart.x,
-            this.state.coordinateStart.y
-          );
-          ctx.lineTo(end.x, end.y);
-          ctx.strokeStyle = '#ff0000';
-          ctx.lineWidth = 2.5;
-          ctx.stroke();
-        }
+        const coorStart = this.state.coordinateStart;
+        this.drawLine(coorStart, end);
       }
     }
   };
 
-  drawLine = (startx, starty, endx, endy) => {
+  displayLines = list => {
+    list.forEach(annotation =>
+      this.drawLine(annotation.coordinates[0], annotation.coordinates[1])
+    );
+  };
+
+  drawLine = (
+    start = this.state.coordinateStart,
+    end = this.state.coordinateEnd
+  ) => {
+    const element = this.dicomImg;
     const canvas = this.dicomImg.children[0];
     if (canvas.getContext) {
       const ctx = element.children[0].getContext('2d');
       ctx.beginPath();
-      ctx.moveTo(this.state.coordinateStart.x, this.state.coordinateStart.y);
+      ctx.moveTo(start.x, start.y);
       ctx.lineTo(end.x, end.y);
       ctx.strokeStyle = '#ff0000';
       ctx.lineWidth = 2.5;
@@ -183,7 +177,6 @@ class BrowseFile extends React.Component {
         `http://localhost:8080/restApo/webapi/lib/images/${filename}/users/${username}`
       )
       .then(function(response) {
-        console.log('response', response);
         console.log('response.data', response.data.annotationList);
         self.setState({ annotationList: response.data.annotationList });
       })
@@ -192,7 +185,7 @@ class BrowseFile extends React.Component {
       });
   };
   getMousePos = (canvas, evt) => {
-    var rect = canvas.getBoundingClientRect();
+    const rect = canvas.getBoundingClientRect();
     return {
       x: evt.clientX - rect.left,
       y: evt.clientY - rect.top
@@ -206,7 +199,7 @@ class BrowseFile extends React.Component {
     cornerstoneTools.external.cornerstone = cornerstone;
     cornerstoneTools.external.cornerstoneMath = cornerstoneMath;
     cornerstoneTools.external.Hammer = Hammer;
-    var element = this.dicomImg;
+    const element = this.dicomImg;
     cornerstone.enable(element);
   }
 
@@ -221,12 +214,10 @@ class BrowseFile extends React.Component {
       clickCounter: 0
     });
     this.postData();
+    this.getAnnotationList(this.props.userName, this.state.fileName);
   };
 
   render() {
-    console.log('state after annotation', this.state);
-    console.log(this.props);
-
     return (
       <div>
         <input
@@ -242,6 +233,7 @@ class BrowseFile extends React.Component {
             style={{ width: '512px', height: '512px' }}
             ref={node => (this.dicomImg = node)}
             onClick={this.handleClick}
+            // onLoad={alert('here')}
           />
           {this.state.areCoordinatesReady ? (
             <Modal

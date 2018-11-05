@@ -83,12 +83,17 @@ class BrowseFile extends React.Component {
   handleDocumentUploadChange = event => {
     const fileInput = document.querySelector('#input-file');
     let fileName;
+    console.log('file input:', fileInput);
     if (fileInput.files) {
       const file = fileInput.files[0];
-      const filePath = document.getElementById('input-file').value + '';
-      fileName = filePath.replace(/.*[\/\\]/, '');
-      this.setState({ fileName });
-      this.loadMedicalImage(file, fileName);
+      if (file) {
+        console.log('file:', file);
+        const filePath = document.getElementById('input-file').value + '';
+        console.log('filePath:', filePath);
+        fileName = filePath.replace(/.*[\/\\]/, '');
+        this.setState({ fileName });
+        this.loadMedicalImage(file, fileName);
+      }
     }
   };
 
@@ -215,7 +220,7 @@ class BrowseFile extends React.Component {
       clickCounter: 0
     });
     this.postData();
-    this.getAnnotationList(this.props.userName, this.state.fileName);
+    // this.getAnnotationList(this.props.userName, this.state.fileName);
   };
 
   render() {
@@ -261,7 +266,10 @@ class BrowseFile extends React.Component {
             </Modal>
           ) : null}
           {this.state.annotationList.length > 0 ? (
-            <AnnotationList data={this.state.annotationList} />
+            <AnnotationList
+              data={this.state.annotationList}
+              file={this.state.fileName}
+            />
           ) : null}
         </div>
       </div>

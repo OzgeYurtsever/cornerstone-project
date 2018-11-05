@@ -3,4 +3,8 @@ body {background-color: #F0EAE6;}
 #display {
     display: flex; /* or inline-flex */
     align-items: flex-start;
-  }
+}
+
+h3 {
+    padding-left: 2rem;
+}

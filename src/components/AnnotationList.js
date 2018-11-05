@@ -6,7 +6,12 @@ const AnnotationList = props => {
       Annotation {index + 1}: {annotation.annotationName}
     </li>
   ));
-  return <ul>{anatotionList}</ul>;
+  return (
+    <div>
+      <h3>File Name: {props.file}</h3>
+      <ul>{anatotionList}</ul>
+    </div>
+  );
 };
 
 export default AnnotationList;

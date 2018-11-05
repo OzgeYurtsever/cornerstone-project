@@ -10,7 +10,6 @@ const NameForm = props => {
         if (!input.value.trim()) {
           return;
         }
-        console.log(input.value);
         props.onUserName(input.value);
       }}
     >

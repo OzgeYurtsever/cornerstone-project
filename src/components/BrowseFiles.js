@@ -62,6 +62,7 @@ class BrowseFile extends React.Component {
   constructor(props) {
     super(props);
     this.dicomImg = null;
+    this.api = 'http://localhost:8080/restApi/webapp/lib';
     this.state = {
       clickCounter: 0,
       fileName: '',
@@ -71,6 +72,17 @@ class BrowseFile extends React.Component {
       annotation: '',
       annotationList: []
     };
+  }
+
+  componentDidMount() {
+    cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
+    cornerstoneWADOImageLoader.webWorkerManager.initialize(config);
+    cornerstoneWADOImageLoader.external.dicomParser = dicomParser;
+    cornerstoneTools.external.cornerstone = cornerstone;
+    cornerstoneTools.external.cornerstoneMath = cornerstoneMath;
+    cornerstoneTools.external.Hammer = Hammer;
+    const element = this.dicomImg;
+    cornerstone.enable(element);
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -83,13 +95,10 @@ class BrowseFile extends React.Component {
   handleDocumentUploadChange = event => {
     const fileInput = document.querySelector('#input-file');
     let fileName;
-    console.log('file input:', fileInput);
     if (fileInput.files) {
       const file = fileInput.files[0];
       if (file) {
-        console.log('file:', file);
         const filePath = document.getElementById('input-file').value + '';
-        console.log('filePath:', filePath);
         fileName = filePath.replace(/.*[\/\\]/, '');
         this.setState({ fileName });
         this.loadMedicalImage(file, fileName);
@@ -124,7 +133,6 @@ class BrowseFile extends React.Component {
           areCoordinatesReady: true
         });
         const coorStart = this.state.coordinateStart;
-        this.drawLine(coorStart, end);
       }
     }
   };
@@ -167,7 +175,9 @@ class BrowseFile extends React.Component {
 
     axios
       .post(
-        `http://localhost:8080/restApo/webapi/lib/images/${filename}/users/${username}/annotations/${aimname}`,
+        `${
+          this.api
+        }/images/${filename}/users/${username}/annotations/${aimname}`,
         postData
       )
       .then(res => console.log(res))
@@ -175,14 +185,14 @@ class BrowseFile extends React.Component {
         self.getAnnotationList(username, filename);
       })
       .catch(err => console.log(err));
+
+    this.setState({ annotation: '' });
   };
 
   getAnnotationList = (username, filename) => {
     const self = this;
     axios
-      .get(
-        `http://localhost:8080/restApo/webapi/lib/images/${filename}/users/${username}`
-      )
+      .get(`${this.api}/images/${filename}/users/${username}`)
       .then(function(response) {
         self.setState({ annotationList: response.data.annotationList });
       })
@@ -190,6 +200,7 @@ class BrowseFile extends React.Component {
         console.log(error);
       });
   };
+
   getMousePos = (canvas, evt) => {
     const rect = canvas.getBoundingClientRect();
     return {
@@ -198,20 +209,12 @@ class BrowseFile extends React.Component {
     };
   };
 
-  componentDidMount() {
-    cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
-    cornerstoneWADOImageLoader.webWorkerManager.initialize(config);
-    cornerstoneWADOImageLoader.external.dicomParser = dicomParser;
-    cornerstoneTools.external.cornerstone = cornerstone;
-    cornerstoneTools.external.cornerstoneMath = cornerstoneMath;
-    cornerstoneTools.external.Hammer = Hammer;
-    const element = this.dicomImg;
-    cornerstone.enable(element);
-  }
-
   getAnnotationName = e => {
     e.preventDefault();
-    this.setState({ annotation: e.target.value });
+    const annotationName = e.target.value;
+    if (annotationName.trim().length > 0) {
+      this.setState({ annotation: e.target.value });
+    }
   };
 
   closeModal = () => {
@@ -219,8 +222,10 @@ class BrowseFile extends React.Component {
       areCoordinatesReady: false,
       clickCounter: 0
     });
-    this.postData();
-    // this.getAnnotationList(this.props.userName, this.state.fileName);
+    if (this.state.annotation.length > 0) {
+      this.postData();
+      this.drawLine();
+    }
   };
 
   render() {

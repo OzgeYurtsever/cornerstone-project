@@ -88,11 +88,7 @@ class BrowseFile extends React.Component {
       const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
       const filePath = document.getElementById('input-file').value + '';
       fileName = filePath.replace(/.*[\/\\]/, '');
-
-      this.getAnnotationList(this.props.userName, fileName);
-
       this.setState({ fileName });
-
       cornerstone.loadImage(imageId).then(function(image) {
         const viewport = cornerstone.getDefaultViewport(
           element.children[0],
@@ -100,6 +96,7 @@ class BrowseFile extends React.Component {
         );
         cornerstone.displayImage(element, image, viewport);
       });
+      this.getAnnotationList(this.props.userName, fileName);
     }
   };
 
@@ -150,6 +147,7 @@ class BrowseFile extends React.Component {
   };
 
   postData = () => {
+    const self = this;
     const postData = {
       startX: this.state.coordinateStart.x,
       startY: this.state.coordinateStart.y,
@@ -167,6 +165,9 @@ class BrowseFile extends React.Component {
         postData
       )
       .then(res => console.log(res))
+      .then(() => {
+        self.getAnnotationList(username, filename);
+      })
       .catch(err => console.log(err));
   };
 
@@ -177,7 +178,6 @@ class BrowseFile extends React.Component {
         `http://localhost:8080/restApo/webapi/lib/images/${filename}/users/${username}`
       )
       .then(function(response) {
-        console.log('response.data', response.data.annotationList);
         self.setState({ annotationList: response.data.annotationList });
       })
       .catch(function(error) {
@@ -233,7 +233,6 @@ class BrowseFile extends React.Component {
             style={{ width: '512px', height: '512px' }}
             ref={node => (this.dicomImg = node)}
             onClick={this.handleClick}
-            // onLoad={alert('here')}
           />
           {this.state.areCoordinatesReady ? (
             <Modal

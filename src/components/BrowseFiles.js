@@ -1,6 +1,7 @@
 import React from 'react';
 import Modal from 'react-modal';
 import axios from 'axios';
+import 'babel-polyfill';
 import * as cornerstone from 'cornerstone-core';
 import * as cornerstoneMath from 'cornerstone-math';
 import * as cornerstoneTools from 'cornerstone-tools';
@@ -81,23 +82,23 @@ class BrowseFile extends React.Component {
 
   handleDocumentUploadChange = event => {
     const fileInput = document.querySelector('#input-file');
-    const element = this.dicomImg;
     let fileName;
     if (fileInput.files) {
       const file = fileInput.files[0];
-      const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
       const filePath = document.getElementById('input-file').value + '';
       fileName = filePath.replace(/.*[\/\\]/, '');
       this.setState({ fileName });
-      cornerstone.loadImage(imageId).then(function(image) {
-        const viewport = cornerstone.getDefaultViewport(
-          element.children[0],
-          image
-        );
-        cornerstone.displayImage(element, image, viewport);
-      });
-      this.getAnnotationList(this.props.userName, fileName);
+      this.loadMedicalImage(file, fileName);
     }
+  };
+
+  loadMedicalImage = async (file, fileName) => {
+    const element = this.dicomImg;
+    const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+    const image = await cornerstone.loadImage(imageId);
+    const viewport = cornerstone.getDefaultViewport(element.children[0], image);
+    cornerstone.displayImage(element, image, viewport);
+    this.getAnnotationList(this.props.userName, fileName);
   };
 
   handleClick = e => {
@@ -222,7 +223,6 @@ class BrowseFile extends React.Component {
       <div>
         <input
           id="input-file"
-          multi
           type="file"
           onChange={this.handleDocumentUploadChange}
         />
